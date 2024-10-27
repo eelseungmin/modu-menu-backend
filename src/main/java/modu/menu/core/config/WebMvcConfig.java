@@ -5,7 +5,7 @@ import modu.menu.core.auth.jwt.JwtProvider;
 import modu.menu.core.converter.FoodTypeRequestConverter;
 import modu.menu.core.converter.VibeTypeRequestConverter;
 import modu.menu.core.interceptor.JwtCheckInterceptor;
-import modu.menu.user.repository.UserRepository;
+import modu.menu.repository.UserRepository;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

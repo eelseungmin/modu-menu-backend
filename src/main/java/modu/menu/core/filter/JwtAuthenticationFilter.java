@@ -11,9 +11,9 @@ import modu.menu.core.auth.jwt.JwtProvider;
 import modu.menu.core.exception.Exception401;
 import modu.menu.core.exception.Exception500;
 import modu.menu.core.response.ErrorMessage;
-import modu.menu.user.domain.User;
-import modu.menu.user.domain.UserStatus;
-import modu.menu.user.repository.UserRepository;
+import modu.menu.domain.User;
+import modu.menu.domain.UserStatus;
+import modu.menu.repository.UserRepository;
 
 import java.io.IOException;
 

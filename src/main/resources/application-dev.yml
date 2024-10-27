@@ -6,22 +6,22 @@ server:
       force: true
 
 spring:
+#  datasource:
+#    url: jdbc:h2:mem:test;MODE=MySQL
+#    driver-class-name: org.h2.Driver
+#    username: modu
+#    password:
   datasource:
-    url: jdbc:h2:mem:test;MODE=MySQL
-    driver-class-name: org.h2.Driver
-    username: modu
-    password:
-  #  datasource:
-  #    url: jdbc:mysql://localhost:3306/test_db?useSSL=false # MySQL 8.x부터 useSSL=false 추가 필요
-  #    driver-class-name: com.mysql.cj.jdbc.Driver
-  #    username: root
-  #    password: tmdals0520!
+    url: jdbc:mysql://localhost:3306/local_db?useSSL=false # MySQL 8.x부터 useSSL=false 추가 필요
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: ${DB_PASSWORD}
   h2:
     console:
       enabled: true
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
     properties:
       hibernate:
         show-sql: true

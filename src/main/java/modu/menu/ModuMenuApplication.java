@@ -10,6 +10,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class ModuMenuApplication {
 
     public static void main(String[] args) {
+//        try {
+//            SpringApplication.run(ModuMenuApplication.class, args);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
         SpringApplication.run(ModuMenuApplication.class, args);
     }
 

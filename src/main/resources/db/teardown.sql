@@ -2,7 +2,6 @@
 SET REFERENTIAL_INTEGRITY FALSE;
 
 truncate table user_tb;
-truncate table oauth_tb;
 truncate table vote_tb;
 truncate table choice_tb;
 truncate table vote_item_tb;

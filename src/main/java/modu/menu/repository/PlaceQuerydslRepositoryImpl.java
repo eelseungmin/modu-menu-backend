@@ -23,7 +23,7 @@ import static modu.menu.domain.QVibe.vibe;
 
 @Repository
 @RequiredArgsConstructor
-public class PlaceQueryRepository {
+public class PlaceQuerydslRepositoryImpl implements PlaceQuerydslRepository {
 
     private final JPAQueryFactory query;
     private static final int PAGE_SIZE = 20;
@@ -38,6 +38,7 @@ public class PlaceQueryRepository {
      * 2-a) 가까운 거리순
      * 2-b) 거리 동일한 경우, 음식점명 가나다순
      */
+    @Override
     public Page<Place> findByCondition(Double latitude, Double longitude, List<FoodType> foods, List<VibeType> vibes, Integer page) {
         List<Place> firstPlaces = query.select(place)
                 .from(place)

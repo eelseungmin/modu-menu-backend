@@ -6,7 +6,8 @@ import modu.menu.domain.FoodType;
 import modu.menu.controller.model.CategoryResponse;
 import modu.menu.controller.model.SearchPlaceResponse;
 import modu.menu.domain.Place;
-import modu.menu.repository.PlaceQueryRepository;
+import modu.menu.repository.PlaceQuerydslRepositoryImpl;
+import modu.menu.repository.PlaceRepository;
 import modu.menu.service.model.FoodTypeServiceResponse;
 import modu.menu.service.model.SearchResultServiceResponse;
 import modu.menu.service.model.VibeTypeServiceResponse;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Transactional(readOnly = true)
@@ -22,7 +24,7 @@ import java.util.List;
 @Service
 public class PlaceService {
 
-    private final PlaceQueryRepository placeQueryRepository;
+    private final PlaceRepository placeRepository;
 
     // 카테고리 목록 조회
     public CategoryResponse getCategory() {
@@ -41,7 +43,7 @@ public class PlaceService {
             Integer page
     ) {
 
-        Page<Place> places = placeQueryRepository.findByCondition(latitude, longitude, foods, vibes, page);
+        Page<Place> places = placeRepository.findByCondition(latitude, longitude, foods, vibes, page);
 
         if (places == null || places.getContent().isEmpty()) {
             return null;
@@ -79,5 +81,27 @@ public class PlaceService {
                 .isLast(places.isLast())
                 .isEmpty(places.isEmpty())
                 .build();
+    }
+
+    @Transactional
+    public void insertDummyData() {
+        List<Place> dummyPlaces = new ArrayList<>();
+        for (int i = 0; i < 500000; i++) {
+            dummyPlaces.add(
+                    Place.builder()
+                            .name("dummy" + i)
+                            .address("dummy" + i)
+                            .ph("dummy" + i)
+                            .businessHours("dummy" + i)
+                            .menu("dummy" + i)
+                            .latitude(37.52519 + 0.00001 * i)
+                            .longitude(127.02753 + 0.00001 * i)
+                            .imageUrl("dummy" + i)
+                            .build()
+            );
+        }
+
+        placeRepository.insertDummyData(dummyPlaces);
+//        placeRepository.saveAll(dummyPlaces);
     }
 }

@@ -37,7 +37,7 @@ class PlaceRepositoryTest extends IntegrationTestSupporter {
     private PlaceFoodRepository placeFoodRepository;
 
     @Autowired
-    private PlaceQueryRepository placeQueryRepository;
+    private PlaceQuerydslRepositoryImpl placeQuerydslRepositoryImpl;
 
     @BeforeEach
     void setUp() {
@@ -78,7 +78,7 @@ class PlaceRepositoryTest extends IntegrationTestSupporter {
         Integer page = 0;
 
         // when
-        Page<Place> places = placeQueryRepository.findByCondition(latitude, longitude, null, null, page);
+        Page<Place> places = placeQuerydslRepositoryImpl.findByCondition(latitude, longitude, null, null, page);
 
         // then
         assertThat(places.getContent()).hasSize(2);
@@ -96,7 +96,7 @@ class PlaceRepositoryTest extends IntegrationTestSupporter {
         List<VibeType> vibes = List.of(VibeType.QUIET);
 
         // when
-        Page<Place> places = placeQueryRepository.findByCondition(latitude, longitude, null, vibes, page);
+        Page<Place> places = placeQuerydslRepositoryImpl.findByCondition(latitude, longitude, null, vibes, page);
 
         // then
         assertThat(places.getContent()).hasSize(2);
@@ -113,7 +113,7 @@ class PlaceRepositoryTest extends IntegrationTestSupporter {
         List<FoodType> foods = List.of(FoodType.LATIN);
 
         // when
-        Page<Place> places = placeQueryRepository.findByCondition(latitude, longitude, foods, null, page);
+        Page<Place> places = placeQuerydslRepositoryImpl.findByCondition(latitude, longitude, foods, null, page);
 
         // then
         assertThat(places.getContent()).hasSize(1);
@@ -131,7 +131,7 @@ class PlaceRepositoryTest extends IntegrationTestSupporter {
         List<VibeType> vibes = List.of(VibeType.QUIET);
 
         // when
-        Page<Place> places = placeQueryRepository.findByCondition(latitude, longitude, foods, vibes, page);
+        Page<Place> places = placeQuerydslRepositoryImpl.findByCondition(latitude, longitude, foods, vibes, page);
 
         // then
         assertThat(places.getContent()).hasSize(1);

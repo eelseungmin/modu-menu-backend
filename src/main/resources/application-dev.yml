@@ -12,18 +12,16 @@ spring:
 #    username: modu
 #    password:
   datasource:
-    url: jdbc:mysql://localhost:3306/local_db?useSSL=false # MySQL 8.x부터 useSSL=false 추가 필요
+    url: jdbc:mysql://localhost:3306/modumenu?useSSL=false&allowPublicKeyRetrieval=true&profileSQL=true&logger=Slf4JLogger&maxQuerySizeToLog=999999&rewriteBatchedStatements=true # MySQL 8.x부터 useSSL=false 추가 필요
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: ${DB_PASSWORD}
-  h2:
-    console:
-      enabled: true
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
         show-sql: true
         format_sql: true
       default_batch_fetch_size: 100 # oneToMany 사용시 in 쿼리 자동으로 작성

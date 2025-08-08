@@ -70,6 +70,12 @@
         <logger name="org.hibernate.type.descriptor.sql" level="trace">
             <appender-ref ref="CONSOLE"/>
         </logger>
+        <logger name="org.springframework.jdbc.core.JdbcTemplate" level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+        <logger name="com.mysql.cj.jdbc" level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
     </springProfile>
 
     <springProfile name="prod">

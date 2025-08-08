@@ -23,13 +23,3 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
-
-oauth2:
-  user:
-    kakao:
-      client-id: 2a2a821ddfebdb0b1ee1e056b51d2103 # 앱 REST API 키
-      client-secret: 1PTjnSQ9AYjiJ85AVhcO00qOJmdybjkK # 테스트용 Secret키
-      redirect-uri: https://localhost:8080/oauth/redirect # 인가 코드를 전달받을 서비스 서버의 URI
-  provider:
-    kakao:
-      token-uri: https://kauth.kakao.com/oauth/token

@@ -12,9 +12,11 @@ import modu.menu.core.response.ErrorMessage;
 import modu.menu.domain.User;
 import modu.menu.domain.UserStatus;
 import modu.menu.repository.UserRepository;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @RequiredArgsConstructor
+@Component
 public class JwtCheckInterceptor implements HandlerInterceptor {
 
     private final UserRepository userRepository;

@@ -5,6 +5,7 @@ import modu.menu.core.auth.jwt.JwtProvider;
 import modu.menu.core.converter.FoodTypeRequestConverter;
 import modu.menu.core.converter.VibeTypeRequestConverter;
 import modu.menu.core.interceptor.JwtCheckInterceptor;
+import modu.menu.core.interceptor.PerformanceLoggingInterceptor;
 import modu.menu.repository.UserRepository;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
@@ -16,13 +17,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    private final UserRepository userRepository;
-    private final JwtProvider jwtProvider;
+    private final VibeTypeRequestConverter vibeTypeRequestConverter;
+    private final FoodTypeRequestConverter foodTypeRequestConverter;
+    private final JwtCheckInterceptor jwtCheckInterceptor;
+    private final PerformanceLoggingInterceptor performanceLoggingInterceptor;
 
     @Override
     public void addFormatters(FormatterRegistry registry) {
-        registry.addConverter(new VibeTypeRequestConverter());
-        registry.addConverter(new FoodTypeRequestConverter());
+        registry.addConverter(vibeTypeRequestConverter);
+        registry.addConverter(foodTypeRequestConverter);
     }
 
     @Override
@@ -34,8 +37,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new JwtCheckInterceptor(userRepository, jwtProvider))
+        registry.addInterceptor(performanceLoggingInterceptor)
                 .order(1)
+                .excludePathPatterns(
+                        "/api-docs/**", // Swagger
+                        "/swagger-ui/**", // Swagger
+                        "/api/slack",
+                        "/api/health-check"
+                );
+        registry.addInterceptor(jwtCheckInterceptor)
+                .order(2)
                 .excludePathPatterns(
                         "/api-docs/**", // Swagger
                         "/swagger-ui/**", // Swagger

@@ -2,7 +2,9 @@ package modu.menu.core.converter;
 
 import modu.menu.domain.VibeType;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.stereotype.Component;
 
+@Component
 public class VibeTypeRequestConverter implements Converter<String, VibeType> {
 
     @Override

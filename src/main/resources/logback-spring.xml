@@ -67,6 +67,9 @@
             <appender-ref ref="SLACK"/>
         </logger>
         <!-- 쿼리 파라미터 출력 -->
+        <logger name="org.hibernate.SQL" level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
         <logger name="org.hibernate.type.descriptor.sql" level="trace">
             <appender-ref ref="CONSOLE"/>
         </logger>

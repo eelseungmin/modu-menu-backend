@@ -8,6 +8,7 @@ import modu.menu.core.util.DistanceCalculator;
 import modu.menu.domain.FoodType;
 import modu.menu.domain.Place;
 import modu.menu.domain.VibeType;
+import net.ttddyy.dsproxy.QueryCountHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -52,6 +53,9 @@ public class PlaceQuerydslRepositoryImpl implements PlaceQuerydslRepository {
                 .where(foodNames(foods), vibeNames(vibes))
                 .fetch();
         log.debug("======================first places size: {}======================", firstPlaces.size());
+        log.info("쿼리 실행 개수: {}, 쿼리 실행 시간: {}ms",
+                QueryCountHolder.get("ProxyDataSource").getTotal(),
+                QueryCountHolder.get("ProxyDataSource").getTime());
         log.debug("======================first query end.======================");
 
         log.debug("======================second query start.======================");
@@ -62,9 +66,13 @@ public class PlaceQuerydslRepositoryImpl implements PlaceQuerydslRepository {
                 .where(foodNames(foods))
                 .fetch();
         log.debug("======================second places size: {}======================", secondPlaces.size());
+        log.info("쿼리 실행 개수: {}, 쿼리 실행 시간: {}ms",
+                QueryCountHolder.get("ProxyDataSource").getTotal(),
+                QueryCountHolder.get("ProxyDataSource").getTime());
         log.debug("======================second query end.======================");
 
         log.debug("======================sort start.======================");
+        long startTime = System.currentTimeMillis();
         // 중복 제거 후 검색 정책에 따라 정렬
         List<Place> sortedPlaces = Stream.concat(firstPlaces.stream(), secondPlaces.stream())
                 .distinct()
@@ -83,6 +91,7 @@ public class PlaceQuerydslRepositoryImpl implements PlaceQuerydslRepository {
                     }
                 })
                 .toList();
+        log.info("정렬 시간: {}ms", System.currentTimeMillis() - startTime);
         log.debug("======================sort end.======================");
 
         return new PageImpl<>(

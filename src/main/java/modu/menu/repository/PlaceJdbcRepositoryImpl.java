@@ -17,25 +17,26 @@ public class PlaceJdbcRepositoryImpl implements PlaceJdbcRepository {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public void insertDummyData(List<Place> dummyPlaces) {
-        String sql = "INSERT INTO place_tb (name, address, ph, business_hours, menu, latitude, longitude, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    public void insertDummyData(List<Place> places) {
+        String sql = "INSERT INTO place_tb (id, name, address, ph, business_hours, menu, latitude, longitude, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setString(1, dummyPlaces.get(i).getName());
-                ps.setString(2, dummyPlaces.get(i).getAddress());
-                ps.setString(3, dummyPlaces.get(i).getPh());
-                ps.setString(4, dummyPlaces.get(i).getBusinessHours());
-                ps.setString(5, dummyPlaces.get(i).getMenu());
-                ps.setDouble(6, dummyPlaces.get(i).getLatitude());
-                ps.setDouble(7, dummyPlaces.get(i).getLongitude());
-                ps.setString(8, dummyPlaces.get(i).getImageUrl());
+                ps.setLong(1, places.get(i).getId());
+                ps.setString(2, places.get(i).getName());
+                ps.setString(3, places.get(i).getAddress());
+                ps.setString(4, places.get(i).getPh());
+                ps.setString(5, places.get(i).getBusinessHours());
+                ps.setString(6, places.get(i).getMenu());
+                ps.setDouble(7, places.get(i).getLatitude());
+                ps.setDouble(8, places.get(i).getLongitude());
+                ps.setString(9, places.get(i).getImageUrl());
             }
 
             @Override
             public int getBatchSize() {
-                return dummyPlaces.size();
+                return places.size();
             }
         });
     }

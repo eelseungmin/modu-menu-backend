@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface PlaceJdbcRepository {
 
-    void insertDummyData(List<Place> dummyList);
+    void insertDummyData(List<Place> places);
 }

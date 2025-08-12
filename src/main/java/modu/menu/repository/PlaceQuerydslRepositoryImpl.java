@@ -3,6 +3,7 @@ package modu.menu.repository;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import modu.menu.core.util.DistanceCalculator;
 import modu.menu.domain.FoodType;
 import modu.menu.domain.Place;
@@ -21,6 +22,7 @@ import static modu.menu.domain.QPlaceFood.placeFood;
 import static modu.menu.domain.QPlaceVibe.placeVibe;
 import static modu.menu.domain.QVibe.vibe;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class PlaceQuerydslRepositoryImpl implements PlaceQuerydslRepository {
@@ -40,22 +42,29 @@ public class PlaceQuerydslRepositoryImpl implements PlaceQuerydslRepository {
      */
     @Override
     public Page<Place> findByCondition(Double latitude, Double longitude, List<FoodType> foods, List<VibeType> vibes, Integer page) {
+        log.debug("======================first query start.======================");
         List<Place> firstPlaces = query.select(place)
                 .from(place)
-                .join(place.placeFoods, placeFood)
-                .join(place.placeVibes, placeVibe)
-                .join(placeFood.food, food)
-                .join(placeVibe.vibe, vibe)
+                .leftJoin(place.placeFoods, placeFood)
+                .leftJoin(place.placeVibes, placeVibe)
+                .leftJoin(placeFood.food, food)
+                .leftJoin(placeVibe.vibe, vibe)
                 .where(foodNames(foods), vibeNames(vibes))
                 .fetch();
+        log.debug("======================first places size: {}======================", firstPlaces.size());
+        log.debug("======================first query end.======================");
 
+        log.debug("======================second query start.======================");
         List<Place> secondPlaces = query.select(place)
                 .from(place)
-                .join(place.placeFoods, placeFood)
-                .join(placeFood.food, food)
+                .leftJoin(place.placeFoods, placeFood)
+                .leftJoin(placeFood.food, food)
                 .where(foodNames(foods))
                 .fetch();
+        log.debug("======================second places size: {}======================", secondPlaces.size());
+        log.debug("======================second query end.======================");
 
+        log.debug("======================sort start.======================");
         // 중복 제거 후 검색 정책에 따라 정렬
         List<Place> sortedPlaces = Stream.concat(firstPlaces.stream(), secondPlaces.stream())
                 .distinct()
@@ -74,6 +83,7 @@ public class PlaceQuerydslRepositoryImpl implements PlaceQuerydslRepository {
                     }
                 })
                 .toList();
+        log.debug("======================sort end.======================");
 
         return new PageImpl<>(
                 sortedPlaces.subList(Math.min(page * PAGE_SIZE, sortedPlaces.size()),

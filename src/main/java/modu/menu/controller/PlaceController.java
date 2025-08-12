@@ -55,8 +55,8 @@ public class PlaceController {
     })
     @GetMapping("/api/place")
     public ResponseEntity<ApiSuccessResponse<SearchPlaceResponse>> searchPlace(
-            @PositiveOrZero(message = "위도는 0 또는 양수여야 합니다.") @RequestParam(defaultValue = "37.505098") Double latitude,
-            @PositiveOrZero(message = "경도는 0 또는 양수여야 합니다.") @RequestParam(defaultValue = "127.032941") Double longitude,
+            @PositiveOrZero(message = "위도는 0 또는 양수여야 합니다.") @RequestParam(defaultValue = "37.6545381") Double latitude,
+            @PositiveOrZero(message = "경도는 0 또는 양수여야 합니다.") @RequestParam(defaultValue = "127.06056783") Double longitude,
             @EnumValidation(enumClass = FoodType.class, message = "음식에 허용된 값만 입력해주세요.") @Size(min = 1, message = "음식은 입력 시 최소 1개의 값이 필요합니다.")
             @RequestParam(required = false) List<String> food,
             @EnumValidation(enumClass = VibeType.class, message = "분위기에 허용된 값만 입력해주세요.") @Size(min = 1, message = "분위기는 입력 시 최소 1개의 값이 필요합니다.")

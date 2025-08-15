@@ -96,7 +96,6 @@ public class PlaceService {
         List<PlaceFood> dummyPlaceFoods = new ArrayList<>();
         List<PlaceVibe> dummyPlaceVibes = new ArrayList<>();
         int foodCount = (int) Arrays.stream(FoodType.values()).count();
-        int vibeCount = (int) Arrays.stream(VibeType.values()).count();
         Random random = new Random();
         for (int i = 0; i < 1000000; i++) {
             Place place = Place.builder()
@@ -112,7 +111,6 @@ public class PlaceService {
                     .build();
             dummyPlaces.add(place);
             int randFoodNumber = random.nextInt(foodCount);
-            int randVibeNumber = random.nextInt(vibeCount);
             dummyPlaceFoods.add(PlaceFood.builder()
                     .place(place)
                     .food(Food.builder()
@@ -120,13 +118,15 @@ public class PlaceService {
                             .type(FoodType.values()[randFoodNumber])
                             .build())
                     .build());
-            dummyPlaceVibes.add(PlaceVibe.builder()
-                    .place(place)
-                    .vibe(Vibe.builder()
-                            .id((long) randVibeNumber + 1)
-                            .type(VibeType.values()[randVibeNumber])
-                            .build())
-                    .build());
+            for (VibeType value : VibeType.values()) {
+                dummyPlaceVibes.add(PlaceVibe.builder()
+                        .place(place)
+                        .vibe(Vibe.builder()
+                                .id((long) (value.ordinal() + 1))
+                                .type(value)
+                                .build())
+                        .build());
+            }
         }
 
         placeRepository.insertDummyData(dummyPlaces);

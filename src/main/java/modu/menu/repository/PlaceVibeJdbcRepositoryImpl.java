@@ -15,22 +15,28 @@ import java.util.List;
 public class PlaceVibeJdbcRepositoryImpl implements PlaceVibeJdbcRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private static final int BATCH_SIZE = 1000;
 
     @Override
     public void insertDummyData(List<PlaceVibe> placeVibes) {
         String sql = "INSERT INTO place_vibe_tb (place_id, vibe_id) VALUES (?, ?)";
 
-        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setLong(1, placeVibes.get(i).getPlace().getId());
-                ps.setLong(2, placeVibes.get(i).getVibe().getId());
-            }
+        for (int start = 0; start < placeVibes.size(); start += BATCH_SIZE) {
+            int end = Math.min(start + BATCH_SIZE, placeVibes.size());
+            List<PlaceVibe> batchList = placeVibes.subList(start, end);
 
-            @Override
-            public int getBatchSize() {
-                return placeVibes.size();
-            }
-        });
+            jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+                @Override
+                public void setValues(PreparedStatement ps, int i) throws SQLException {
+                    ps.setLong(1, batchList.get(i).getPlace().getId());
+                    ps.setLong(2, batchList.get(i).getVibe().getId());
+                }
+
+                @Override
+                public int getBatchSize() {
+                    return batchList.size();
+                }
+            });
+        }
     }
 }

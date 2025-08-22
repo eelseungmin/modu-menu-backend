@@ -6,20 +6,18 @@ import modu.menu.core.util.DistanceCalculator;
 import modu.menu.domain.*;
 import modu.menu.controller.model.CategoryResponse;
 import modu.menu.controller.model.SearchPlaceResponse;
+import modu.menu.repository.PlaceFoodDto;
 import modu.menu.repository.PlaceFoodRepository;
 import modu.menu.repository.PlaceRepository;
 import modu.menu.repository.PlaceVibeRepository;
-import modu.menu.service.model.FoodTypeServiceResponse;
-import modu.menu.service.model.SearchResultServiceResponse;
-import modu.menu.service.model.VibeTypeServiceResponse;
+import modu.menu.service.model.*;
+import net.ttddyy.dsproxy.QueryCountHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Transactional(readOnly = true)
@@ -27,6 +25,7 @@ import java.util.Random;
 @Service
 public class PlaceService {
 
+    private static final int PAGE_SIZE = 20;
     private final PlaceRepository placeRepository;
     private final PlaceFoodRepository placeFoodRepository;
     private final PlaceVibeRepository placeVibeRepository;
@@ -47,46 +46,97 @@ public class PlaceService {
             List<VibeType> vibes,
             Integer page
     ) {
+        log.debug("======================query start.======================");
+        List<PlaceFlatDto> flatList = placeRepository.findByCondition(latitude, longitude, foods, vibes);
+        log.debug("쿼리 실행 개수: {}, 쿼리 실행 시간: {}ms", QueryCountHolder.get("ProxyDataSource").getTotal(), QueryCountHolder.get("ProxyDataSource").getTime());
+        log.debug("list size: {}", flatList.size());
+        log.debug("======================query end.======================");
 
-        Page<Place> places = placeRepository.findByCondition(latitude, longitude, foods, vibes, page);
+        // PlaceId 기준으로 그룹핑
+        long startTime = System.currentTimeMillis();
+        log.debug("======================grouping start.======================");
+        Map<Long, SearchResultServiceResponse> placeMap = new HashMap<>();
 
-        log.debug("======================places size: {}======================", places.getContent().size());
-        if (places == null || places.getContent().isEmpty()) {
-            return null;
+        for (PlaceFlatDto dto : flatList) {
+            SearchResultServiceResponse existing = placeMap.get(dto.getId());
+
+            if (existing == null) {
+                double distance = DistanceCalculator.calculate(
+                        latitude, longitude,
+                        dto.getLatitude(), dto.getLongitude()
+                );
+
+                existing = SearchResultServiceResponse.builder()
+                        .id(dto.getId())
+                        .distance(distance >= 1000.0
+                                ? String.format("%.1fkm", distance / 1000.0)
+                                : Math.round(distance) + "m")
+                        .foods(new ArrayList<>())
+                        .vibes(new ArrayList<>())
+                        .build();
+
+                placeMap.put(dto.getId(), existing);
+            }
+        }
+        log.debug("그룹핑 시간: {}ms", System.currentTimeMillis() - startTime);
+        log.debug("map size: {}", placeMap.size());
+        log.debug("======================grouping end.======================");
+
+        // 거리순 정렬
+        List<SearchResultServiceResponse> resultList = new ArrayList<>(placeMap.values());
+        resultList.sort(Comparator
+                .comparing(SearchResultServiceResponse::getDistance)
+        );
+
+        // 페이지네이션
+        int start = page * PAGE_SIZE;
+        int end = Math.min(start + PAGE_SIZE, resultList.size());
+        List<SearchResultServiceResponse> pageContent = resultList.subList(start, end);
+
+        // 페이징된 결과의 PlaceId 추출
+        List<Long> pageContentPlaceIds = pageContent.stream()
+                .map(SearchResultServiceResponse::getId)
+                .toList();
+
+        // PlaceId에 대응되는 Vibe 조회
+        log.debug("======================query start.======================");
+        List<PlaceVibeDto> pageContentVibes = placeRepository.findAllVibesByPlaceIds(pageContentPlaceIds);
+        List<PlaceFoodDto> pageContentFoods = placeRepository.findAllFoodsByPlaceIds(pageContentPlaceIds);
+        log.debug("쿼리 실행 개수: {}, 쿼리 실행 시간: {}ms", QueryCountHolder.get("ProxyDataSource").getTotal(), QueryCountHolder.get("ProxyDataSource").getTime());
+        log.debug("======================query end.======================");
+
+        // 기존 응답에 남은 필드 매핑
+        for (SearchResultServiceResponse response : pageContent) {
+            for (PlaceVibeDto vibeDto : pageContentVibes) {
+                if (vibeDto != null && vibeDto.getPlaceId().equals(response.getId())) {
+                    response.getVibes().add(vibeDto.getVibeType());
+                }
+            }
+            for (PlaceFoodDto foodDto : pageContentFoods) {
+                if (foodDto != null && foodDto.getPlaceId().equals(response.getId())) {
+                    response.getFoods().add(foodDto.getFoodType());
+                    response.setName(foodDto.getName());
+                    response.setAddress(foodDto.getAddress());
+                    response.setImageUrl(foodDto.getImageUrl());
+                }
+            }
         }
 
-        log.debug("======================build response start.======================");
-        return SearchPlaceResponse.builder()
-                .results(places.getContent().stream()
-                        .map(place -> {
-                            double distance = DistanceCalculator.calculate(
-                                    latitude,
-                                    longitude,
-                                    place.getLatitude(),
-                                    place.getLongitude()
-                            );
+        // 마지막으로 거리순, 이름순 정렬
+        pageContent.sort(Comparator
+                .comparing(SearchResultServiceResponse::getDistance)
+                .thenComparing(SearchResultServiceResponse::getName)
+        );
 
-                            return SearchResultServiceResponse.builder()
-                                    .id(place.getId())
-                                    .name(place.getName())
-                                    .foods(place.getPlaceFoods().stream()
-                                            .map(placeFood -> placeFood.getFood().getType())
-                                            .toList())
-                                    .vibes(place.getPlaceVibes().stream()
-                                            .map(placeVibe -> placeVibe.getVibe().getType())
-                                            .toList())
-                                    .address(place.getAddress())
-                                    .distance(distance >= 1000.0 ? String.format("%.1f", distance / 1000.0) + "km" : Math.round(distance) + "m")
-                                    .img(place.getImageUrl())
-                                    .build();
-                        })
-                        .toList())
-                .totalElements(places.getTotalElements())
-                .totalPages(places.getTotalPages())
-                .currentPageNumber(places.getNumber())
-                .isFirst(places.isFirst())
-                .isLast(places.isLast())
-                .isEmpty(places.isEmpty())
+        log.debug("======================making response start.======================");
+        return SearchPlaceResponse.builder()
+                .results(pageContent)
+                .totalElements(resultList.size())
+                .totalPages((int) Math.ceil(resultList.size() / (double) PAGE_SIZE))
+                .currentPageNumber(page)
+                .isFirst(page == 0)
+                .isLast(end >= resultList.size())
+                .isEmpty(resultList.isEmpty())
                 .build();
     }
 

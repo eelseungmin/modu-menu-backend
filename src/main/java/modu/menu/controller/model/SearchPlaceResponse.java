@@ -20,7 +20,7 @@ public class SearchPlaceResponse {
     private List<SearchResultServiceResponse> results;
 
     @Schema(description = "페이지 내 목록 갯수")
-    private Long totalElements;
+    private Integer totalElements;
 
     @Schema(description = "총 페이지 수")
     private Integer totalPages;

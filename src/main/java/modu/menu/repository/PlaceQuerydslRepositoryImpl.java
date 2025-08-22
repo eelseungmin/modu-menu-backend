@@ -1,21 +1,20 @@
 package modu.menu.repository;
 
-import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import modu.menu.core.util.DistanceCalculator;
+import modu.menu.core.util.BoundingBoxCalculator;
 import modu.menu.domain.FoodType;
-import modu.menu.domain.Place;
 import modu.menu.domain.VibeType;
-import net.ttddyy.dsproxy.QueryCountHolder;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import modu.menu.service.model.PlaceFlatDto;
+import modu.menu.service.model.PlaceVibeDto;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static modu.menu.domain.QFood.food;
 import static modu.menu.domain.QPlace.place;
@@ -28,91 +27,107 @@ import static modu.menu.domain.QVibe.vibe;
 @RequiredArgsConstructor
 public class PlaceQuerydslRepositoryImpl implements PlaceQuerydslRepository {
 
-    private final JPAQueryFactory query;
-    private static final int PAGE_SIZE = 20;
+    private final JPAQueryFactory queryFactory;
+    // 사용자 위치 기준 2KM 반경으로 1차 필터링
+    private static final double SEARCH_RADIUS_KM = 2.0;
 
     /**
      * 검색 정책
      * 1) 검색 조건에 부합하는 식당을 노출하고,
      * 1-a) 가까운 거리순
      * 1-b) 거리 동일한 경우, 음식점명 가나다순
-     * <p>
-     * 2) 그 뒤에 검색 조건 중 '분위기'를 제외한 나머지 조건에 부합하는 식당 리스트 추가 노출
-     * 2-a) 가까운 거리순
-     * 2-b) 거리 동일한 경우, 음식점명 가나다순
      */
     @Override
-    public Page<Place> findByCondition(Double latitude, Double longitude, List<FoodType> foods, List<VibeType> vibes, Integer page) {
-        log.debug("======================first query start.======================");
-        List<Place> firstPlaces = query.select(place)
+    public List<PlaceFlatDto> findByCondition(Double latitude, Double longitude, List<FoodType> foods, List<VibeType> vibes) {
+        JPAQuery<PlaceFlatDto> query = queryFactory
+                .select(Projections.constructor(PlaceFlatDto.class,
+                        place.id,
+                        place.latitude,
+                        place.longitude
+                ))
+                .from(place);
+
+        if (foods != null && !foods.isEmpty()) {
+            query.join(place.placeFoods, placeFood)
+                    .join(placeFood.food, food);
+        }
+        if (vibes != null && !vibes.isEmpty()) {
+            query.join(place.placeVibes, placeVibe)
+                    .join(placeVibe.vibe, vibe);
+        }
+
+        // bounding box 설정
+        BoundingBoxCalculator.BoundingBox boundingBox = BoundingBoxCalculator.calculateBoundingBox(latitude, longitude, SEARCH_RADIUS_KM);
+        log.debug("minLat: {}, maxLat: {}, minLon: {}, maxLon: {}", boundingBox.getMinLat(), boundingBox.getMaxLat(), boundingBox.getMinLon(), boundingBox.getMaxLon());
+        // WHERE 조건
+        BooleanBuilder whereCondition = new BooleanBuilder();
+        whereCondition
+                .and(place.latitude.between(boundingBox.getMinLat(), boundingBox.getMaxLat()))
+                .and(place.longitude.between(boundingBox.getMinLon(), boundingBox.getMaxLon()));
+        if (foods != null && !foods.isEmpty()) {
+            whereCondition.and(food.type.in(foods));
+        }
+        if (vibes != null && !vibes.isEmpty()) {
+            whereCondition.and(vibe.type.in(vibes));
+        }
+
+        query.where(whereCondition);
+
+        // GROUP BY와 HAVING으로 AND 조건 구현
+        if ((foods != null && !foods.isEmpty()) || (vibes != null && !vibes.isEmpty())) {
+            query.groupBy(place.id);
+
+            // HAVING 조건
+            BooleanBuilder havingCondition = new BooleanBuilder();
+            if (foods != null && !foods.isEmpty()) {
+                havingCondition.and(food.type.count().eq((long) foods.size()));
+            }
+            if (vibes != null && !vibes.isEmpty()) {
+                havingCondition.and(vibe.type.count().eq((long) vibes.size()));
+            }
+
+            query.having(havingCondition);
+        }
+
+        return query.fetch();
+    }
+
+    @Override
+    public List<PlaceVibeDto> findAllVibesByPlaceIds(List<Long> placeIds) {
+        if (placeIds == null || placeIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return queryFactory
+                .select(Projections.constructor(PlaceVibeDto.class,
+                        place.id,
+                        vibe.type
+                ))
                 .from(place)
-                .leftJoin(place.placeFoods, placeFood)
                 .leftJoin(place.placeVibes, placeVibe)
-                .leftJoin(placeFood.food, food)
                 .leftJoin(placeVibe.vibe, vibe)
-                .where(foodNames(foods), vibeNames(vibes))
+                .where(place.id.in(placeIds))
                 .fetch();
-        log.debug("======================first places size: {}======================", firstPlaces.size());
-        log.info("쿼리 실행 개수: {}, 쿼리 실행 시간: {}ms",
-                QueryCountHolder.get("ProxyDataSource").getTotal(),
-                QueryCountHolder.get("ProxyDataSource").getTime());
-        log.debug("======================first query end.======================");
+    }
 
-        log.debug("======================second query start.======================");
-        List<Place> secondPlaces = query.select(place)
+    @Override
+    public List<PlaceFoodDto> findAllFoodsByPlaceIds(List<Long> placeIds) {
+        if (placeIds == null || placeIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return queryFactory
+                .select(Projections.constructor(PlaceFoodDto.class,
+                        place.id,
+                        place.name,
+                        place.address,
+                        place.imageUrl,
+                        food.type
+                ))
                 .from(place)
-                .leftJoin(place.placeFoods, placeFood)
-                .leftJoin(placeFood.food, food)
-                .where(foodNames(foods))
+                .join(place.placeFoods, placeFood)
+                .join(placeFood.food, food)
+                .where(place.id.in(placeIds))
                 .fetch();
-        log.debug("======================second places size: {}======================", secondPlaces.size());
-        log.info("쿼리 실행 개수: {}, 쿼리 실행 시간: {}ms",
-                QueryCountHolder.get("ProxyDataSource").getTotal(),
-                QueryCountHolder.get("ProxyDataSource").getTime());
-        log.debug("======================second query end.======================");
-
-        log.debug("======================sort start.======================");
-        long startTime = System.currentTimeMillis();
-        // 중복 제거 후 검색 정책에 따라 정렬
-        List<Place> sortedPlaces = Stream.concat(firstPlaces.stream(), secondPlaces.stream())
-                .distinct()
-                .filter(place -> DistanceCalculator.calculate(latitude, longitude, place.getLatitude(), place.getLongitude()) <= 1000.0)
-                .sorted((place1, place2) -> {
-                    double distance1 = DistanceCalculator.calculate(latitude, longitude, place1.getLatitude(), place1.getLongitude());
-                    double distance2 = DistanceCalculator.calculate(latitude, longitude, place2.getLatitude(), place2.getLongitude());
-
-                    if (distance1 == distance2) {
-                        return place1.getName().compareTo(place2.getName());
-                    }
-                    if (distance1 > distance2) {
-                        return 1;
-                    } else {
-                        return -1;
-                    }
-                })
-                .toList();
-        log.info("정렬 시간: {}ms", System.currentTimeMillis() - startTime);
-        log.debug("======================sort end.======================");
-
-        return new PageImpl<>(
-                sortedPlaces.subList(Math.min(page * PAGE_SIZE, sortedPlaces.size()),
-                        Math.min((page + 1) * PAGE_SIZE, sortedPlaces.size())),
-                PageRequest.of(page, PAGE_SIZE),
-                sortedPlaces.size()
-        );
-    }
-
-    private BooleanExpression foodNames(List<FoodType> foods) {
-        if (foods == null || foods.isEmpty()) {
-            return null;
-        }
-        return food.type.in(foods);
-    }
-
-    private BooleanExpression vibeNames(List<VibeType> vibes) {
-        if (vibes == null || vibes.isEmpty()) {
-            return null;
-        }
-        return vibe.type.in(vibes);
     }
 }

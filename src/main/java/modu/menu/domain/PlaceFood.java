@@ -16,11 +16,11 @@ public class PlaceFood {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "place_id")
+    @JoinColumn(name = "place_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Place place;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "food_id")
+    @JoinColumn(name = "food_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Food food;
 
     public void syncPlace(Place place) {

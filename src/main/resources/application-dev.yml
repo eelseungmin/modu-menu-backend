@@ -12,7 +12,7 @@ spring:
 #    username: modu
 #    password:
   datasource:
-    url: jdbc:mysql://localhost:3306/modumenu?useSSL=false&allowPublicKeyRetrieval=true&profileSQL=true&logger=Slf4JLogger&maxQuerySizeToLog=999999&rewriteBatchedStatements=true # MySQL 8.x부터 useSSL=false 추가 필요
+    url: jdbc:mysql://localhost:3306/modumenu_no_fk?useSSL=false&allowPublicKeyRetrieval=true&profileSQL=true&logger=Slf4JLogger&maxQuerySizeToLog=999999&rewriteBatchedStatements=true # MySQL 8.x부터 useSSL=false 추가 필요
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: ${DB_PASSWORD}

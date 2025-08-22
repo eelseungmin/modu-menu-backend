@@ -16,10 +16,10 @@ public class ReviewVibe {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "review_id")
+    @JoinColumn(name = "review_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Review review;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vibe_id")
+    @JoinColumn(name = "vibe_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Vibe vibe;
 }

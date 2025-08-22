@@ -16,10 +16,10 @@ public class AgreementHistory extends BaseTime {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "agreement_id")
+    @JoinColumn(name = "agreement_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Agreement agreement;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private User user;
 }

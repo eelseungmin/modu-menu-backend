@@ -16,11 +16,11 @@ public class Participant extends BaseTime {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vote_id")
+    @JoinColumn(name = "vote_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Vote vote;
 
     @Enumerated(EnumType.STRING)

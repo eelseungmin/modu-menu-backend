@@ -41,5 +41,17 @@ public class SearchResultServiceResponse {
     private String distance;
 
     @Schema(description = "음식점 관련 이미지 주소")
-    private String img;
+    private String imageUrl;
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 }

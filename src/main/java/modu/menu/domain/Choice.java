@@ -16,11 +16,11 @@ public class Choice extends BaseTime {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vote_item_id")
+    @JoinColumn(name = "vote_item_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private VoteItem voteItem;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private User user;
 
     public void updateVoteItem(VoteItem voteItem) {
